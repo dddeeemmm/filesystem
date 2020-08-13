@@ -1,0 +1,37 @@
+---
+
+- block:
+
+    - name: create a new primary partition
+      parted:
+        device: '{{ item.dev }}'
+        state: "{{ item.state | d ('present') }}"
+        number: 1
+      with_items: '{{ filesystem }}'
+
+
+    - name: create a filesystem
+      filesystem:
+        fstype: '{{ item.fs }}'
+        dev: '{{ item.dev }}1'
+      with_items: '{{ filesystem }}'
+
+    - name: make mount dir
+      file:
+        state: directory
+        path: '{{ item.path }}'
+      with_items: '{{ filesystem }}'
+
+    - name: mount
+      mount:
+        path: '{{ item.path }}'
+        src: '{{ item.dev }}1'
+        fstype: '{{ item.fs }}'
+#        opts: ro,noauto
+        state: "{{ item.state | d ('mounted') }}"
+      with_items: '{{ filesystem }}'
+
+  when:
+    - filesystem is defined
+    - filesystem != ''
+    - filesystem != []
